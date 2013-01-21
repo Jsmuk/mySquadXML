@@ -27,6 +27,8 @@ if(!defined("IN_MYBB"))
 	die("Direct initialization of this file is not allowed.<br /><br />Please make sure IN_MYBB is defined.");
 }
 
+$plugins->add_hook("index_start","mySquadXML_page");
+
 function mySquadXML_info()
 {
 	return array(
@@ -122,7 +124,17 @@ function mySquadXML_install()
 		'disporder' => '6',
 		'gid' => intval($gid)
 		);
-		
+	$db->insert_query('settings',$setting);
+	$setting = array(
+		'name' => 'mySquadXML_rewrite',
+		'title' => 'Use rewrite',
+		'description' => 'Set this to true if you have set up URL rewriting to rewrite squadxml and squaddtd to index.php?squadxml and index.php?squaddtd',
+		'optionscode' => 'yesno',
+		'value' => '0',
+		'disporder' => '7',
+		'gid' => intval($gid)
+		);
+	$db->insert_query('settings',$setting);
 		
 	rebuild_settings();
 	// Add the profile fields
@@ -191,6 +203,31 @@ function mySquadXML_is_installed()
 	{
 		return false;
 	}
-		
+}
+function mySquadXML_page()
+{
+	global $mybb;
+	if (isset($_GET['squadxml']))
+	{
+		//echo $mybb->settings['bburl'];
+		die();
+	}
+	if (isset($_GET['squaddtd']))
+	{
+		echo "
+		<!ELEMENT squad (name, email, web?, picture?, title?, member+)>
+		<!ATTLIST squad nick CDATA #REQUIRED>
+		<!ELEMENT member (name, email, icq?, remark?)>
+		<!ATTLIST member id CDATA #REQUIRED nick CDATA #REQUIRED>
+		<!ELEMENT name (#PCDATA)>
+		<!ELEMENT email (#PCDATA)>
+		<!ELEMENT icq (#PCDATA)>
+		<!ELEMENT web (#PCDATA)>
+		<!ELEMENT picture (#PCDATA)>
+		<!ELEMENT title (#PCDATA)>
+		<!ELEMENT remark (#PCDATA)>
+		";
+		die();
+	}
 }
 ?>
