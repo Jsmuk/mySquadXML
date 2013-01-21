@@ -128,7 +128,7 @@ function mySquadXML_install()
 	$setting = array(
 		'name' => 'mySquadXML_rewrite',
 		'title' => 'Use rewrite',
-		'description' => 'Set this to true if you have set up URL rewriting to rewrite squadxml and squaddtd to index.php?squadxml and index.php?squaddtd',
+		'description' => 'Set this to yes if you have set up URL rewriting to rewrite squadxml and squaddtd to index.php?squadxml and index.php?squaddtd',
 		'optionscode' => 'yesno',
 		'value' => '0',
 		'disporder' => '7',
@@ -210,23 +210,52 @@ function mySquadXML_page()
 	if (isset($_GET['squadxml']))
 	{
 		//echo $mybb->settings['bburl'];
+		if ((bool)$mybb->settings['mySquadXML_rewrite'])
+		{
+			$DtdUrl = $mybb->settings['bburl']."/squaddtd";
+		}
+		else
+		{
+			$DtdUrl = $mybb->settings['bburl']."/index.php?squaddtd";
+		}
+		// Maybe this isn't the best or most efficent way to output the XML but it sure is the simplest
+		header('Content-Type: text/xml');
+		// File header
+		echo '<?xml version="1.0"?>
+<!DOCTYPE squad SYSTEM "'.$DtdUrl.'">
+		';
+		
+		echo '
+	<squad nick="'.$mybb->settings['mySquadXML_squadnick'].'">
+		<name>'.$mybb->settings['mySquadXML_squadname'].'</name>
+		<email>'.$mybb->settings['mySquadXML_squademail'].'</email>
+		<web>'.$mybb->settings['mySquadXML_web'].'</web>
+		<picture>'.$mybb->settings['mySquadXML_picture'].'</picture>
+		<title>'.$mybb->settings['mySquadXML_title'].'</title>
+		';
+		
+		// TODO: Output all members
+		echo '
+	</squad>
+		';
 		die();
 	}
 	if (isset($_GET['squaddtd']))
 	{
-		echo "
-		<!ELEMENT squad (name, email, web?, picture?, title?, member+)>
-		<!ATTLIST squad nick CDATA #REQUIRED>
-		<!ELEMENT member (name, email, icq?, remark?)>
-		<!ATTLIST member id CDATA #REQUIRED nick CDATA #REQUIRED>
-		<!ELEMENT name (#PCDATA)>
-		<!ELEMENT email (#PCDATA)>
-		<!ELEMENT icq (#PCDATA)>
-		<!ELEMENT web (#PCDATA)>
-		<!ELEMENT picture (#PCDATA)>
-		<!ELEMENT title (#PCDATA)>
-		<!ELEMENT remark (#PCDATA)>
-		";
+		header('Content-Type: text/xml');
+		echo '<?xml version="1.0"?>
+<!ELEMENT squad (name, email, web?, picture?, title?, member+)>
+<!ATTLIST squad nick CDATA #REQUIRED>
+<!ELEMENT member (name, email, icq?, remark?)>
+<!ATTLIST member id CDATA #REQUIRED nick CDATA #REQUIRED>
+<!ELEMENT name (#PCDATA)>
+<!ELEMENT email (#PCDATA)>
+<!ELEMENT icq (#PCDATA)>
+<!ELEMENT web (#PCDATA)>
+<!ELEMENT picture (#PCDATA)>
+<!ELEMENT title (#PCDATA)>
+<!ELEMENT remark (#PCDATA)>
+		';
 		die();
 	}
 }
