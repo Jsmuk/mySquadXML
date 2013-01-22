@@ -227,7 +227,6 @@ function mySquadXML_page()
 	global $mybb;
 	if (isset($_GET['squadxml']))
 	{
-		//echo $mybb->settings['bburl'];
 		if ((bool)$mybb->settings['mySquadXML_rewrite'])
 		{
 			$DtdUrl = $mybb->settings['bburl']."/squaddtd";
@@ -252,9 +251,21 @@ function mySquadXML_page()
 		<title>'.$mybb->settings['mySquadXML_title'].'</title>
 		';
 		
-		// TODO: Output all members
-		mySquadXML_member_output("Test Name","test@test.com","123456","Awesome remark here");
-		mySquadXML_member_output("Test Name","test@test.com","123456","Awesome remark here");
+		$members = mySquadXML_get_members($mybb->settings['mySquadXML_groups']);
+		
+		$i = 0;
+		while ($i <= count($members))
+		{
+			if ($members[$i]['ArmA_UID'] == "" || $members[$i]['ArmA_IGName'] == "")
+			{
+				// NOTHING
+			}
+			else
+			{
+				mySquadXML_member_output($members[$i]['username'],$members[$i]['ArmA_IGName'],$members[$i]['email'],$members[$i]['ArmA_UID'],$members[$i]['ArmA_Remark']);
+			}
+			$i++;
+		}
 		echo '
 	</squad>
 		';
@@ -279,13 +290,67 @@ function mySquadXML_page()
 		die();
 	}
 }
-function mySquadXML_member_output($name,$email,$uid,$remark)
+function mySquadXML_member_output($name,$nick,$email,$uid,$remark)
 {
+	// TODO: Possibly add more information (Grab web address if there is one? ICQ if its set? Does anyone even use ICQ anymore)
 	echo '
-		<member id="'.$uid.'" nick="'.$name.'">
+		<member id="'.$uid.'" nick="'.$nick.'">
 					<name>'.$name.'</name>
 					<email>'.$email.'</email>
 					<remark>'.$remark.'</remark>
 			</member>';
+}
+function mySquadXML_get_members($groups)
+{
+	global $db;
+	$return;
+	$i = 0;
+	// TODO: Make this slightly tider and use less queries, cannot be good to do three queries
+	$query = $db->query("SELECT fid, name FROM ".TABLE_PREFIX."profilefields WHERE name='ArmA UID'");
+	$UIDfid = $db->fetch_field($query, "fid");
+	$query = $db->query("SELECT fid, name FROM ".TABLE_PREFIX."profilefields WHERE name='ArmA Remark'");
+	$RemarkFid = $db->fetch_field($query, "fid");
+	$query = $db->query("SELECT fid, name FROM ".TABLE_PREFIX."profilefields WHERE name='ArmA In-game Name'");
+	$GameNameFid = $db->fetch_field($query, "fid");
+	$ex = explode(',',$groups);
+	if (count($ex) == 1)
+	{
+		
+		$group = (int)$ex[0];
+		$queryUser = $db->query("SELECT `uid`,`username`,`email` FROM `".TABLE_PREFIX."users` WHERE `usergroup` = ".$group.";");
+		while ($row = $db->fetch_array($queryUser))
+		{
+			$return[$i]['username'] = $row['username'];
+			$return[$i]['email'] = $row['email'];
+			$customfidquery = $db->query("SELECT `fid".$UIDfid."`,`fid".$RemarkFid."`,`fid".$GameNameFid."` FROM `".TABLE_PREFIX."userfields` WHERE `ufid` = ".$row['uid']." LIMIT 1");
+			$customfields = $db->fetch_array($customfidquery);
+			$return[$i]['ArmA_Remark'] = $customfields['fid'.$RemarkFid];
+			$return[$i]['ArmA_UID'] = $customfields['fid'.$UIDfid];
+			$return[$i]['ArmA_IGName'] = $customfields['fid'.$GameNameFid];
+			$i++;
+		}
+	}
+	else
+	{
+		$x = 0;
+		while ($x <= count($ex))
+		{
+			$group = (int)$ex[$x];
+		$queryUser = $db->query("SELECT `uid`,`username`,`email` FROM `".TABLE_PREFIX."users` WHERE `usergroup` = ".$group.";");
+		while ($row = $db->fetch_array($queryUser))
+		{
+			$return[$i]['username'] = $row['username'];
+			$return[$i]['email'] = $row['email'];
+			$customfidquery = $db->query("SELECT `fid".$UIDfid."`,`fid".$RemarkFid."`,`fid".$GameNameFid."` FROM `".TABLE_PREFIX."userfields` WHERE `ufid` = ".$row['uid']." LIMIT 1");
+			$customfields = $db->fetch_array($customfidquery);
+			$return[$i]['ArmA_Remark'] = $customfields['fid'.$RemarkFid];
+			$return[$i]['ArmA_UID'] = $customfields['fid'.$UIDfid];
+			$return[$i]['ArmA_IGName'] = $customfields['fid'.$GameNameFid];
+			$i++;
+		}
+		$x++;
+		}
+	}
+	return $return;
 }
 ?>
