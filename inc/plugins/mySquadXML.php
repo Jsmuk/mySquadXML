@@ -167,6 +167,20 @@ function mySquadXML_install()
 	$query = $db->insert_query("profilefields", $new_profilefield);
 	$fid = $db->insert_id($query);
 	$db->query("ALTER TABLE ".TABLE_PREFIX."userfields ADD fid".$fid." text;");
+	$new_profilefield = array(
+					'name'    => 'ArmA In-game Name',
+					'description' => 'Name used in ArmA',
+					'type' => 'text',
+					'maxlength' => 255,
+					'disporder' => '3',
+					'required' => 0,
+					'editable' => 1,
+					'hidden' => 1,
+					'postnum' => 0
+				);
+	$query = $db->insert_query("profilefields", $new_profilefield);
+	$fid = $db->insert_id($query);
+	$db->query("ALTER TABLE ".TABLE_PREFIX."userfields ADD fid".$fid." text;");
 
 			
 }
@@ -186,10 +200,14 @@ function mySquadXML_uninstall()
 	$fid1 = $db->fetch_field($query, "fid");
 	$query = $db->query("SELECT fid, name FROM ".TABLE_PREFIX."profilefields WHERE name='ArmA Remark'");
 	$fid2 = $db->fetch_field($query, "fid");
+	$query = $db->query("SELECT fid, name FROM ".TABLE_PREFIX."profilefields WHERE name='ArmA In-game Name'");
+	$fid3 = $db->fetch_field($query, "fid");
 	$db->query("DELETE FROM ".TABLE_PREFIX."profilefields WHERE name='ArmA UID'");
 	$db->query("DELETE FROM ".TABLE_PREFIX."profilefields WHERE name='ArmA Remark'");
+	$db->query("DELETE FROM ".TABLE_PREFIX."profilefields WHERE name='ArmA In-game Name'");
 	$db->query("ALTER TABLE ".TABLE_PREFIX."userfields DROP fid".$fid1."");
 	$db->query("ALTER TABLE ".TABLE_PREFIX."userfields DROP fid".$fid2."");
+	$db->query("ALTER TABLE ".TABLE_PREFIX."userfields DROP fid".$fid3."");
 }
 function mySquadXML_is_installed()
 {
@@ -235,6 +253,8 @@ function mySquadXML_page()
 		';
 		
 		// TODO: Output all members
+		mySquadXML_member_output("Test Name","test@test.com","123456","Awesome remark here");
+		mySquadXML_member_output("Test Name","test@test.com","123456","Awesome remark here");
 		echo '
 	</squad>
 		';
@@ -258,5 +278,14 @@ function mySquadXML_page()
 		';
 		die();
 	}
+}
+function mySquadXML_member_output($name,$email,$uid,$remark)
+{
+	echo '
+		<member id="'.$uid.'" nick="'.$name.'">
+					<name>'.$name.'</name>
+					<email>'.$email.'</email>
+					<remark>'.$remark.'</remark>
+			</member>';
 }
 ?>
