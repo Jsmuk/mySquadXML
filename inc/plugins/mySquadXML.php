@@ -34,9 +34,9 @@ function mySquadXML_info()
 	return array(
 		"name"		=> "mySquadXML",
 		"description"		=> "Plugin for managing ArmA2 Squad.XML from inside of MyBB",
-		"website"		=> "",
-		"author"		=> "Jsm / BSO",
-		"authorsite"		=> "http://epic.ftp.sh",
+		"website"		=> "https://github.com/Jsmuk/mySquadXML",
+		"author"		=> "Jsm",
+		"authorsite"		=> "https://github.com/Jsmuk/mySquadXML",
 		"version"		=> "0.1",
 		"guid" 			=> "",
 		"compatibility"	=> "*"
