@@ -24,8 +24,6 @@ If you want "nice" URLs like forum/squadxml/ instead of index.php?squadxml you c
 
 > RewriteEngine on
 
-> RewriteBase /~james/mybb/
-
 > RewriteRule ^squad.xml index.php?squadxml
 
 > RewriteRule ^squaddtd index.php?squaddtd
