@@ -16,6 +16,22 @@ The plugin can be configured in the settings portion of the Admin Control Panel.
 
 The logo file needs to be placed in the root of the forum, a complete URI to a logo hosted elsewhere *might* work, however I am unsure as I have never tried this.
 
+"Nice" URLs (mod_rewrite)
+-------------------------
+
+If you want "nice" URLs like forum/squadxml/ instead of index.php?squadxml you can enable this option in the settings panel. You need to add this to your .htaccess. 
+> Options +FollowSymLinks
+
+> RewriteEngine on
+
+> RewriteBase /~james/mybb/
+
+> RewriteRule ^squad.xml index.php?squadxml
+
+> RewriteRule ^squaddtd index.php?squaddtd
+
+Squadxml can be anything but squaddtd must for now be squaddtd as it is required by the plugin script.
+
 Things to note
 --------------
 
