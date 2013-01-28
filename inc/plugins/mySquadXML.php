@@ -135,52 +135,65 @@ function mySquadXML_install()
 		'gid' => intval($gid)
 		);
 	$db->insert_query('settings',$setting);
+	$setting = array(
+		'name' => 'mySquadXML_keepdata',
+		'title' => 'Upgrade / Keep USER Data',
+		'description' => 'If this is set to true user data (such as UID) will not be removed from the database when the plugin is uninstalled. This is useful for upgrading',
+		'optionscode' => 'yesno',
+		'value' => '1',
+		'disporder' => '8',
+		'gid' => intval($gid)
+		);
+	$db->insert_query('settings',$setting);
 		
 	rebuild_settings();
 	// Add the profile fields
-	global $db;
-	$new_profilefield = array(
-					'name'    => 'ArmA UID',
-					'description' => 'ArmA Player ID',
-					'type' => 'text',
-					'maxlength' => 100,
-					'disporder' => 4,
-					'required' => 0,
-					'editable' => 1,
-					'hidden' => 1,
-					'postnum' => 0
-				);
-	$query = $db->insert_query("profilefields", $new_profilefield);
-	$fid = $db->insert_id($query);
-	$db->query("ALTER TABLE ".TABLE_PREFIX."userfields ADD fid".$fid." text;");
-	$new_profilefield = array(
-					'name'    => 'ArmA Remark',
-					'description' => 'ArmA Squad XML Remark',
-					'type' => 'text',
-					'maxlength' => 255,
-					'disporder' => '3',
-					'required' => 0,
-					'editable' => 1,
-					'hidden' => 1,
-					'postnum' => 0
-				);
-	$query = $db->insert_query("profilefields", $new_profilefield);
-	$fid = $db->insert_id($query);
-	$db->query("ALTER TABLE ".TABLE_PREFIX."userfields ADD fid".$fid." text;");
-	$new_profilefield = array(
-					'name'    => 'ArmA In-game Name',
-					'description' => 'Name used in ArmA',
-					'type' => 'text',
-					'maxlength' => 255,
-					'disporder' => '3',
-					'required' => 0,
-					'editable' => 1,
-					'hidden' => 1,
-					'postnum' => 0
-				);
-	$query = $db->insert_query("profilefields", $new_profilefield);
-	$fid = $db->insert_id($query);
-	$db->query("ALTER TABLE ".TABLE_PREFIX."userfields ADD fid".$fid." text;");
+	if (!(bool)$mybb->settings['mySquadXML_keepdata'])
+	{
+
+		$new_profilefield = array(
+						'name'    => 'ArmA UID',
+						'description' => 'ArmA Player ID',
+						'type' => 'text',
+						'maxlength' => 100,
+						'disporder' => 4,
+						'required' => 0,
+						'editable' => 1,
+						'hidden' => 1,
+						'postnum' => 0
+					);
+		$query = $db->insert_query("profilefields", $new_profilefield);
+		$fid = $db->insert_id($query);
+		$db->query("ALTER TABLE ".TABLE_PREFIX."userfields ADD fid".$fid." text;");
+		$new_profilefield = array(
+						'name'    => 'ArmA Remark',
+						'description' => 'ArmA Squad XML Remark',
+						'type' => 'text',
+						'maxlength' => 255,
+						'disporder' => '3',
+						'required' => 0,
+						'editable' => 1,
+						'hidden' => 1,
+						'postnum' => 0
+					);
+		$query = $db->insert_query("profilefields", $new_profilefield);
+		$fid = $db->insert_id($query);
+		$db->query("ALTER TABLE ".TABLE_PREFIX."userfields ADD fid".$fid." text;");
+		$new_profilefield = array(
+						'name'    => 'ArmA In-game Name',
+						'description' => 'Name used in ArmA',
+						'type' => 'text',
+						'maxlength' => 255,
+						'disporder' => '3',
+						'required' => 0,
+						'editable' => 1,
+						'hidden' => 1,
+						'postnum' => 0
+					);
+		$query = $db->insert_query("profilefields", $new_profilefield);
+		$fid = $db->insert_id($query);
+		$db->query("ALTER TABLE ".TABLE_PREFIX."userfields ADD fid".$fid." text;");
+	}
 
 			
 }
@@ -196,18 +209,21 @@ function mySquadXML_uninstall()
 	$db->write_query("DELETE FROM ".TABLE_PREFIX."settinggroups WHERE name = 'mySquadXML'");
 	rebuild_settings(); 
 	
-	$query = $db->query("SELECT fid, name FROM ".TABLE_PREFIX."profilefields WHERE name='ArmA UID'");
-	$fid1 = $db->fetch_field($query, "fid");
-	$query = $db->query("SELECT fid, name FROM ".TABLE_PREFIX."profilefields WHERE name='ArmA Remark'");
-	$fid2 = $db->fetch_field($query, "fid");
-	$query = $db->query("SELECT fid, name FROM ".TABLE_PREFIX."profilefields WHERE name='ArmA In-game Name'");
-	$fid3 = $db->fetch_field($query, "fid");
-	$db->query("DELETE FROM ".TABLE_PREFIX."profilefields WHERE name='ArmA UID'");
-	$db->query("DELETE FROM ".TABLE_PREFIX."profilefields WHERE name='ArmA Remark'");
-	$db->query("DELETE FROM ".TABLE_PREFIX."profilefields WHERE name='ArmA In-game Name'");
-	$db->query("ALTER TABLE ".TABLE_PREFIX."userfields DROP fid".$fid1."");
-	$db->query("ALTER TABLE ".TABLE_PREFIX."userfields DROP fid".$fid2."");
-	$db->query("ALTER TABLE ".TABLE_PREFIX."userfields DROP fid".$fid3."");
+	if (!(bool)$mybb->settings['mySquadXML_keepdata'])
+	{
+		$query = $db->query("SELECT fid, name FROM ".TABLE_PREFIX."profilefields WHERE name='ArmA UID'");
+		$fid1 = $db->fetch_field($query, "fid");
+		$query = $db->query("SELECT fid, name FROM ".TABLE_PREFIX."profilefields WHERE name='ArmA Remark'");
+		$fid2 = $db->fetch_field($query, "fid");
+		$query = $db->query("SELECT fid, name FROM ".TABLE_PREFIX."profilefields WHERE name='ArmA In-game Name'");
+		$fid3 = $db->fetch_field($query, "fid");
+		$db->query("DELETE FROM ".TABLE_PREFIX."profilefields WHERE name='ArmA UID'");
+		$db->query("DELETE FROM ".TABLE_PREFIX."profilefields WHERE name='ArmA Remark'");
+		$db->query("DELETE FROM ".TABLE_PREFIX."profilefields WHERE name='ArmA In-game Name'");
+		$db->query("ALTER TABLE ".TABLE_PREFIX."userfields DROP fid".$fid1."");
+		$db->query("ALTER TABLE ".TABLE_PREFIX."userfields DROP fid".$fid2."");
+		$db->query("ALTER TABLE ".TABLE_PREFIX."userfields DROP fid".$fid3."");
+	}
 }
 function mySquadXML_is_installed()
 {
