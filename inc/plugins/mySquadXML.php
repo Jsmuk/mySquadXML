@@ -193,6 +193,21 @@ function mySquadXML_install()
 		$query = $db->insert_query("profilefields", $new_profilefield);
 		$fid = $db->insert_id($query);
 		$db->query("ALTER TABLE ".TABLE_PREFIX."userfields ADD fid".$fid." text;");
+		$new_profilefield = array(
+						'name'    => 'ArmA Show Email',
+						'description' => 'Determines if your email address is shown in the Squad.XML',
+						'type' => 'checkbox\nShow Email',
+						'maxlength' => 100,
+						'disporder' => '4',
+						'required' => 0,
+						'editable' => 1,
+						'hidden' => 1,
+						'postnum' => 0
+					);
+		$query = $db->insert_query("profilefields", $new_profilefield);
+		$fid = $db->insert_id($query);
+		$db->query("ALTER TABLE ".TABLE_PREFIX."userfields ADD fid".$fid." text;");
+
 	}
 
 			
@@ -217,13 +232,18 @@ function mySquadXML_uninstall()
 		$fid2 = $db->fetch_field($query, "fid");
 		$query = $db->query("SELECT fid, name FROM ".TABLE_PREFIX."profilefields WHERE name='ArmA In-game Name'");
 		$fid3 = $db->fetch_field($query, "fid");
+		$query = $db->query("SELECT fid, name FROM ".TABLE_PREFIX."profilefields WHERE name='ArmA Show Email'");
+		$fid4 = $db->fetch_field($query, "fid");
 		$db->query("DELETE FROM ".TABLE_PREFIX."profilefields WHERE name='ArmA UID'");
 		$db->query("DELETE FROM ".TABLE_PREFIX."profilefields WHERE name='ArmA Remark'");
 		$db->query("DELETE FROM ".TABLE_PREFIX."profilefields WHERE name='ArmA In-game Name'");
+		$db->query("DELETE FROM ".TABLE_PREFIX."profilefields WHERE name='ArmA Show Email'");
 		$db->query("ALTER TABLE ".TABLE_PREFIX."userfields DROP fid".$fid1."");
 		$db->query("ALTER TABLE ".TABLE_PREFIX."userfields DROP fid".$fid2."");
 		$db->query("ALTER TABLE ".TABLE_PREFIX."userfields DROP fid".$fid3."");
+		$db->query("ALTER TABLE ".TABLE_PREFIX."userfields DROP fid".$fid4."");
 	}
+	// TODO: Hide the custom fields that we have added, unhide on reinstall
 }
 function mySquadXML_is_installed()
 {
@@ -268,7 +288,7 @@ function mySquadXML_page()
 		';
 		
 		$members = mySquadXML_get_members($mybb->settings['mySquadXML_groups']);
-		
+		error_reporting(E_ALL);
 		$i = 0;
 		while ($i <= count($members))
 		{
@@ -315,6 +335,7 @@ function mySquadXML_member_output($name,$nick,$email,$uid,$remark)
 					<email>'.$email.'</email>
 					<remark>'.$remark.'</remark>
 			</member>';
+
 }
 function mySquadXML_get_members($groups)
 {
@@ -328,7 +349,10 @@ function mySquadXML_get_members($groups)
 	$RemarkFid = $db->fetch_field($query, "fid");
 	$query = $db->query("SELECT fid, name FROM ".TABLE_PREFIX."profilefields WHERE name='ArmA In-game Name'");
 	$GameNameFid = $db->fetch_field($query, "fid");
+	$query = $db->query("SELECT fid, name FROM ".TABLE_PREFIX."profilefields WHERE name='ArmA Show Email'");
+	$ShowEmail = $db->fetch_field($query, "fid");
 	$ex = explode(',',$groups);
+
 	if (count($ex) == 1)
 	{
 		
@@ -336,10 +360,18 @@ function mySquadXML_get_members($groups)
 		$queryUser = $db->query("SELECT `uid`,`username`,`email` FROM `".TABLE_PREFIX."users` WHERE `usergroup` = ".$group.";");
 		while ($row = $db->fetch_array($queryUser))
 		{
+					$customfidquery = $db->query("SELECT `fid".$UIDfid."`,`fid".$RemarkFid."`,`fid".$GameNameFid."`,`fid".$ShowEmail."` FROM `".TABLE_PREFIX."userfields` WHERE `ufid` = ".$row['uid']." LIMIT 1");
+		$customfields = $db->fetch_array($customfidquery);
 			$return[$i]['username'] = $row['username'];
-			$return[$i]['email'] = $row['email'];
-			$customfidquery = $db->query("SELECT `fid".$UIDfid."`,`fid".$RemarkFid."`,`fid".$GameNameFid."` FROM `".TABLE_PREFIX."userfields` WHERE `ufid` = ".$row['uid']." LIMIT 1");
-			$customfields = $db->fetch_array($customfidquery);
+			if ($customfields['fid'.$ShowEmail] == "Show Email")
+			{
+				$return[$i]['email'] = $row['email'];
+			}
+			else
+			{
+				$return[$i]['email'] = "";
+			}
+			
 			$return[$i]['ArmA_Remark'] = $customfields['fid'.$RemarkFid];
 			$return[$i]['ArmA_UID'] = $customfields['fid'.$UIDfid];
 			$return[$i]['ArmA_IGName'] = $customfields['fid'.$GameNameFid];
@@ -352,19 +384,27 @@ function mySquadXML_get_members($groups)
 		while ($x <= count($ex))
 		{
 			$group = (int)$ex[$x];
-		$queryUser = $db->query("SELECT `uid`,`username`,`email` FROM `".TABLE_PREFIX."users` WHERE `usergroup` = ".$group.";");
-		while ($row = $db->fetch_array($queryUser))
-		{
-			$return[$i]['username'] = $row['username'];
-			$return[$i]['email'] = $row['email'];
-			$customfidquery = $db->query("SELECT `fid".$UIDfid."`,`fid".$RemarkFid."`,`fid".$GameNameFid."` FROM `".TABLE_PREFIX."userfields` WHERE `ufid` = ".$row['uid']." LIMIT 1");
-			$customfields = $db->fetch_array($customfidquery);
-			$return[$i]['ArmA_Remark'] = $customfields['fid'.$RemarkFid];
-			$return[$i]['ArmA_UID'] = $customfields['fid'.$UIDfid];
-			$return[$i]['ArmA_IGName'] = $customfields['fid'.$GameNameFid];
-			$i++;
-		}
-		$x++;
+			$queryUser = $db->query("SELECT `uid`,`username`,`email` FROM `".TABLE_PREFIX."users` WHERE `usergroup` = ".$group.";");
+			while ($row = $db->fetch_array($queryUser))
+			{
+				$customfidquery = $db->query("SELECT `fid".$UIDfid."`,`fid".$RemarkFid."`,`fid".$GameNameFid."`,`fid".$ShowEmail."` FROM `".TABLE_PREFIX."userfields` WHERE `ufid` = ".$row['uid']." LIMIT 1");
+				$customfields = $db->fetch_array($customfidquery);
+				$return[$i]['username'] = $row['username'];
+				if ($customfields['fid'.$ShowEmail] == "Show Email")
+				{
+					$return[$i]['email'] = $row['email'];
+				}
+				else
+				{
+					$return[$i]['email'] = "";
+				}
+
+				$return[$i]['ArmA_Remark'] = $customfields['fid'.$RemarkFid];
+				$return[$i]['ArmA_UID'] = $customfields['fid'.$UIDfid];
+				$return[$i]['ArmA_IGName'] = $customfields['fid'.$GameNameFid];
+				$i++;
+			}
+			$x++;
 		}
 	}
 	return $return;
