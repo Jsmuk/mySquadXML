@@ -288,7 +288,6 @@ function mySquadXML_page()
 		';
 		
 		$members = mySquadXML_get_members($mybb->settings['mySquadXML_groups']);
-		error_reporting(E_ALL);
 		$i = 0;
 		while ($i <= count($members))
 		{
