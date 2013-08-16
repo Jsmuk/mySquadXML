@@ -136,12 +136,22 @@ function mySquadXML_install()
 		);
 	$db->insert_query('settings',$setting);
 	$setting = array(
+		'name' => 'mySquadXML_arma3',
+		'title' => 'Enable ArmA3 Support',
+		'description' => 'Set this to yes if you wish to enable ArmA3 support, at index.php?squadxml_a3 or squadxml/a3',
+		'optionscode' => 'yesno',
+		'value' => '0',
+		'disporder' => '8',
+		'gid' => intval($gid)
+		);
+	$db->insert_query('settings',$setting);
+	$setting = array(
 		'name' => 'mySquadXML_keepdata',
 		'title' => 'Upgrade / Keep USER Data',
 		'description' => 'If this is set to true user data (such as UID) will not be removed from the database when the plugin is uninstalled. This is useful for upgrading',
 		'optionscode' => 'yesno',
 		'value' => '1',
-		'disporder' => '8',
+		'disporder' => '9',
 		'gid' => intval($gid)
 		);
 	$db->insert_query('settings',$setting);
@@ -157,6 +167,20 @@ function mySquadXML_install()
 						'type' => 'text',
 						'maxlength' => 100,
 						'disporder' => 10,
+						'required' => 0,
+						'editable' => 1,
+						'hidden' => 1,
+						'postnum' => 0
+					);
+		$query = $db->insert_query("profilefields", $new_profilefield);
+		$fid = $db->insert_id($query);
+		$db->query("ALTER TABLE ".TABLE_PREFIX."userfields ADD fid".$fid." text;");
+		$new_profilefield = array(
+						'name'    => 'ArmA3 UID',
+						'description' => 'ArmA3 Player ID',
+						'type' => 'text',
+						'maxlength' => 100,
+						'disporder' => 11,
 						'required' => 0,
 						'editable' => 1,
 						'hidden' => 1,
@@ -234,14 +258,18 @@ function mySquadXML_uninstall()
 		$fid3 = $db->fetch_field($query, "fid");
 		$query = $db->query("SELECT fid, name FROM ".TABLE_PREFIX."profilefields WHERE name='ArmA Show Email'");
 		$fid4 = $db->fetch_field($query, "fid");
+		$query = $db->query("SELECT fid, name FROM ".TABLE_PREFIX."profilefields WHERE name='ArmA3 UID'");
+		$fid5 = $db->fetch_field($query, "fid");
 		$db->query("DELETE FROM ".TABLE_PREFIX."profilefields WHERE name='ArmA UID'");
 		$db->query("DELETE FROM ".TABLE_PREFIX."profilefields WHERE name='ArmA Remark'");
 		$db->query("DELETE FROM ".TABLE_PREFIX."profilefields WHERE name='ArmA In-game Name'");
 		$db->query("DELETE FROM ".TABLE_PREFIX."profilefields WHERE name='ArmA Show Email'");
+		$db->query("DELETE FROM ".TABLE_PREFIX."profilefields WHERE name='ArmA3 UID'");
 		$db->query("ALTER TABLE ".TABLE_PREFIX."userfields DROP fid".$fid1."");
 		$db->query("ALTER TABLE ".TABLE_PREFIX."userfields DROP fid".$fid2."");
 		$db->query("ALTER TABLE ".TABLE_PREFIX."userfields DROP fid".$fid3."");
 		$db->query("ALTER TABLE ".TABLE_PREFIX."userfields DROP fid".$fid4."");
+		$db->query("ALTER TABLE ".TABLE_PREFIX."userfields DROP fid".$fid5."");
 	}
 	// TODO: Hide the custom fields that we have added, unhide on reinstall
 }
@@ -299,6 +327,14 @@ function mySquadXML_page()
 			{
 				mySquadXML_member_output($members[$i]['username'],$members[$i]['ArmA_IGName'],$members[$i]['email'],$members[$i]['ArmA_UID'],$members[$i]['ArmA_Remark']);
 			}
+			if ($members[$i]['ArmA_UID3'] == "" || $members[$i]['ArmA_IGName'] == "")
+			{
+
+			}
+			else
+			{
+				mySquadXML_member_output($members[$i]['username'],$members[$i]['ArmA_IGName'],$members[$i]['email'],$members[$i]['ArmA_UID3'],$members[$i]['ArmA_Remark']);
+			}
 			$i++;
 		}
 		echo '
@@ -350,6 +386,9 @@ function mySquadXML_get_members($groups)
 	$GameNameFid = $db->fetch_field($query, "fid");
 	$query = $db->query("SELECT fid, name FROM ".TABLE_PREFIX."profilefields WHERE name='ArmA Show Email'");
 	$ShowEmail = $db->fetch_field($query, "fid");
+	$query = $db->query("SELECT fid, name FROM ".TABLE_PREFIX."profilefields WHERE name='ArmA3 UID'");
+	$UID3fid = $db->fetch_field($query, "fid");
+
 	$ex = explode(',',$groups);
 
 	if (count($ex) == 1)
@@ -359,8 +398,8 @@ function mySquadXML_get_members($groups)
 		$queryUser = $db->query("SELECT `uid`,`username`,`email` FROM `".TABLE_PREFIX."users` WHERE `usergroup` = ".$group.";");
 		while ($row = $db->fetch_array($queryUser))
 		{
-					$customfidquery = $db->query("SELECT `fid".$UIDfid."`,`fid".$RemarkFid."`,`fid".$GameNameFid."`,`fid".$ShowEmail."` FROM `".TABLE_PREFIX."userfields` WHERE `ufid` = ".$row['uid']." LIMIT 1");
-		$customfields = $db->fetch_array($customfidquery);
+			$customfidquery = $db->query("SELECT `fid".$UIDfid."`,`fid".$RemarkFid."`,`fid".$GameNameFid."`,`fid".$ShowEmail."`, `fid".$UID3fid."` FROM `".TABLE_PREFIX."userfields` WHERE `ufid` = ".$row['uid']." LIMIT 1");
+			$customfields = $db->fetch_array($customfidquery);
 			$return[$i]['username'] = $row['username'];
 			if ($customfields['fid'.$ShowEmail] == "Show Email")
 			{
@@ -373,6 +412,7 @@ function mySquadXML_get_members($groups)
 			
 			$return[$i]['ArmA_Remark'] = $customfields['fid'.$RemarkFid];
 			$return[$i]['ArmA_UID'] = $customfields['fid'.$UIDfid];
+			$return[$i]['ArmA_UID3'] = $customfields['fid'.$UID3fid];
 			$return[$i]['ArmA_IGName'] = $customfields['fid'.$GameNameFid];
 			$i++;
 		}
@@ -386,7 +426,8 @@ function mySquadXML_get_members($groups)
 			$queryUser = $db->query("SELECT `uid`,`username`,`email` FROM `".TABLE_PREFIX."users` WHERE `usergroup` = ".$group.";");
 			while ($row = $db->fetch_array($queryUser))
 			{
-				$customfidquery = $db->query("SELECT `fid".$UIDfid."`,`fid".$RemarkFid."`,`fid".$GameNameFid."`,`fid".$ShowEmail."` FROM `".TABLE_PREFIX."userfields` WHERE `ufid` = ".$row['uid']." LIMIT 1");
+				//$customfidquery = $db->query("SELECT `fid".$UIDfid."`,`fid".$RemarkFid."`,`fid".$GameNameFid."`,`fid".$ShowEmail."` FROM `".TABLE_PREFIX."userfields` WHERE `ufid` = ".$row['uid']." LIMIT 1");
+				$customfidquery = $db->query("SELECT `fid".$UIDfid."`,`fid".$RemarkFid."`,`fid".$GameNameFid."`,`fid".$ShowEmail."`, `fid".$UID3fid."` FROM `".TABLE_PREFIX."userfields` WHERE `ufid` = ".$row['uid']." LIMIT 1");
 				$customfields = $db->fetch_array($customfidquery);
 				$return[$i]['username'] = $row['username'];
 				if ($customfields['fid'.$ShowEmail] == "Show Email")
@@ -400,6 +441,7 @@ function mySquadXML_get_members($groups)
 
 				$return[$i]['ArmA_Remark'] = $customfields['fid'.$RemarkFid];
 				$return[$i]['ArmA_UID'] = $customfields['fid'.$UIDfid];
+				$return[$i]['ArmA_UID3'] = $customfields['fid'.$UID3fid];
 				$return[$i]['ArmA_IGName'] = $customfields['fid'.$GameNameFid];
 				$i++;
 			}
